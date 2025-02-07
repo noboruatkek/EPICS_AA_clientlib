@@ -1,0 +1,37 @@
+#!
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "EPICS_Archiver_Appiance_Clientlib_YamamotoNoboru"
+version = "0.0.1"
+authors = [
+  { name="YAMAMOTO, Noboru", email="noboru.yamamoto@kek.jp" },
+]
+description = "Python module to access EPICS Arivher Appliance throug WebAPIs."
+readme ={file = "README.rst", content-type = "text/x-rst"}
+
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+  "google.protobuf > 3.14.0"
+]
+maintainers = [
+  {name = "YAMAMOTO,  Noboru", email = "noboru.yamamoto@kek.jp"}
+]
+keywords = ["EPICS", "Archiver Appliance"]
+
+[project.urls]
+Homepage = "https://j-parc.jp/ctrl/documents/Articles"
+# Issues = "https://j-parc.jp/ctrl/documents/Articles"
+# Homepage = "https://example.com"
+# Documentation = "https://readthedocs.org"
+# Repository = "https://github.com/me/spam.git"
+# Issues = "https://github.com/me/spam/issues"
+# Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
