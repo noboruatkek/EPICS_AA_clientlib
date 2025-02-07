@@ -21,7 +21,7 @@ import json,datetime,time
 import logging
 logging.getLogger().setLevel(logging.WARN)
 
-from EAA_WebAPIs import *
+from ..WebAPIs import *
 
 # setup Timezone
 # import pytz
