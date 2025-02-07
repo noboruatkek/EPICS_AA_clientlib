@@ -20,9 +20,17 @@ import json,datetime,time
 import logging
 #logging.getLogger().setLevel(logging.WARN)
 
+# 
+from . import EPICSEvent_pb2
+from .EPICSEvent_pb2 import *
+from google.protobuf.json_format import MessageToJson, Parse, MessageToDict
+import google
+#
+from .pbutils import *
+
 __all__=[
     # bpl/
-    'filterArchivedPVs',
+    'filterArchivedPVs', # post
     # 'getApplianceMetrics', # bpl/reports
     # 'getApplianceMetricsForAppliance' , # bpl/reports
     # 'getInstanceMetricsForAppliance', # bpl/reports
@@ -34,7 +42,6 @@ __all__=[
     # 'getClientConfig'
     'getMetadata',
     'areWeArchiving',
-    #'filterArchivedPVs', # post
     ## DataRetrievalServlet:doGet
     'getData',
     ## DataRetrievalServlet:doGet/doPost
@@ -50,6 +57,7 @@ __all__=[
     #
     "DataIterator"
 ]
+
 # setup Timezone
 # import pytz
 # jst=pytz.timezone("Asia/Tokyo")
@@ -87,7 +95,8 @@ if sys.version_info > (3,11):
         TXT="txt"
         MAT="mat"
     
-baseuri="http://www-cont.j-parc.jp"
+import os
+baseuri=os.environ.get("EPICS_AA_URL" ,"http://www-cont.j-parc.jp")
 data_retrieval_url=os.path.join(baseuri,"retrieval")
 
 def buildReqURI(api, query):
@@ -371,8 +380,14 @@ def getDataAtTimeForAppliance(pvNames:List[str], at:Union[str,datetime.datetime]
     return json.loads(resp)
 
 def filterArchivedPVs(pvs:list[str]):
-    """
-    POST only 
+    """ remove unarchived channels from given list of PVs.
+
+    parameters:
+      pvs: list of PV names to check if it is archived.
+    
+    comment:
+    POST only
+    
     """
     api=f"bpl/filterArchivedPVs"
     query={}
@@ -382,123 +397,23 @@ def filterArchivedPVs(pvs:list[str]):
     
 # protol buffer conversion functions
 
-from . import EPICSEvent_pb2
-from .EPICSEvent_pb2 import *
-from google.protobuf.json_format import MessageToJson, Parse, MessageToDict
-import google
-
-# for raw i.e. http/pb
-def unescape(epb):
-    pb=epb.replace(b'\x1b\x03',b'\x0d').replace(b'\x1b\x02',b'\n').replace(b'\x1b\x01',b'\x1b').strip() # b'\x1b\x01' should be last.
-    return pb
-
 def toDatetime(year, siy, nano, tzinfo=datetime.timezone.utc): # siy:secondsintoyear
     return datetime.datetime(year,1,1,0,0,0,0,tzinfo=tzinfo) + datetime.timedelta(seconds=siy, microseconds=nano/1000)
 
-def findChunkBoundaries(pbraw):
-    n=0
-    s=[0]
-    while 1:
-        try:
-            i=pbraw.index(b'\n',n)
-            s.append((n,i+1))
-            n= i+1
-            continue
-        except ValueError:
-            break
-    if s[-1][-1] != len(pbraw):
-        s.append((n,len(pbraw)))
-    return s   #s:[(0, 2),(2, 4), (4,62162)] ->  chunk: pbraw[0:2], pbraw[2:4],pbraw[4:62162]
-
 def chunk_to_json(chunks):
-        for chunk in chunks:
-            data=chunk["data"]
-            desc=chunk["info"]
-            year=chunk["info"]["year"]
-            data=[e for e in data
-                  if (('val' in e)  and (e['val'] != "NaN"))]
-            plt.plot(
-                [ toDatetime( year, e["secondsintoyear"], e["nano"] if "nano" in e else 0,    tzinfo=UTC  ).astimezone(JST)
-                  for e in data],
-                [ d["val"] for d in data],
-            label= f"{pp}_{nsamples}" if pp else "raw",
-            )
-            av=numpy.average([ d["val"] for d in data])
-            if numpy.isnan(av):
-                continue
-            xmin,xmax=[toDatetime( year, e["secondsintoyear"], e["nano"] if "nano" in e else 0, tzinfo=UTC).astimezone(JST)
-                        for e in (data[0],data[-1])]
-            plt.hlines(av, xmin, xmax, linestyle=":")
-            plt.text(
-                0.9, av,
-                f"{av:5.3f}",
-                transform=plt.get_yaxis_transform(),
-            )
-    
-def convert_pbchunk(chunkbytes):
-    message_type_dict=EPICSEvent_pb2.DESCRIPTOR.message_types_by_name
-    _type_dict={
-        SCALAR_BYTE: ScalarByte,
-        SCALAR_DOUBLE: ScalarDouble,
-        SCALAR_ENUM: ScalarEnum,
-        SCALAR_FLOAT: ScalarFloat,
-        SCALAR_INT: ScalarInt,
-        SCALAR_SHORT: ScalarShort,
-        SCALAR_STRING: ScalarString,
-        V4_GENERIC_BYTES: V4GenericBytes,
-        WAVEFORM_BYTE: VectorChar, 
-        WAVEFORM_DOUBLE:  VectorDouble,
-        WAVEFORM_ENUM: VectorEnum,
-        WAVEFORM_FLOAT: VectorFloat,
-        WAVEFORM_INT: VectorInt,
-        WAVEFORM_SHORT: VectorShort,
-        WAVEFORM_STRING: VectorString
-        }
-    plinfo=None
     data=[]
-    for l in chunkbytes.split(b'\n'):
-        if not l:
-            continue
-        if not plinfo:
-            plinfo=PayloadInfo.FromString(unescape(l))
-            if plinfo.type in _type_dict:
-                T=_type_dict[plinfo.type]
-            else: # we should use dictionary
-                logging.debug(f"{plinfo.type=},{plinfo=}")
-                T=None
-                data=[]
-                continue
-        if l == b'\n':
-            break
-        try:
-            data.append(T.FromString(unescape(l)))
-        except google.protobuf.message.DecodeError as m:
-            logging.info(m, l, "@")
-            # data.append(T.FromString((l)))
-        except AttributeError as m:
-            logging.info(m, l, "@")
-    return {"info" : PayloadInfoToDict(plinfo), "data" : [MessageToDict(dobj) for dobj in data]}
-
-def convert_pb(raw):
-    chunks=[convert_pbchunk(chunkbytes) for chunkbytes in raw.split(b'\n\n')]
-    return chunks
-
-def PayloadInfoToDict(plinfo:PayloadInfo):
-    d=MessageToDict(plinfo)
-    logging.info(f"{[(desc.name, obj) for desc,obj in plinfo.ListFields()]}")
-    logging.debug(f"{d=},{plinfo.headers}")
-    if hasattr(plinfo,"headers"):
-        d["headers"]=dict([(h.name,h.val) for h in plinfo.headers])
-    elif "headers" in d:
-        d["headers"]=dict([(h["name"],h["val"]) for h in d["headers"]])
-    logging.debug(f"{d=}")
-    return d
-
-def DataIterator(chunks:List[dict]) -> Iterable[dict]:
-    ometa=None
     for chunk in chunks:
+        desc=chunk["info"]
         year=chunk["info"]["year"]
+        data+=[e for e in chunk["data"]
+              if (('val' in e)  and (e['val'] != "NaN"))]
+    return data
+            
+def DataIterator(chunks:List[dict]) -> Iterable[dict]:
+    pmeta=None # previous meta data
+    for chunk in chunks:
         meta=chunk["info"]
+        year=chunk["info"]["year"]
         for e in chunk["data"]:
             if 'val' in e:
                 date=toDatetime( year,
@@ -506,8 +421,8 @@ def DataIterator(chunks:List[dict]) -> Iterable[dict]:
                                  e.pop("nano") if "nano" in e else 0 ,
                                  tzinfo=UTC,
                                 ).astimezone(JST)
-                if meta != ometa:
-                    ometa=meta
+                if meta != pmeta:
+                    pmeta=meta
                     e.update(meta)
                     logging.info(f"{meta=}")
                 yield {"date":date,
