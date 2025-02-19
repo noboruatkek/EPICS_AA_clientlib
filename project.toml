@@ -365,6 +365,7 @@ max-module-lines = 1000
 
 # Allow wildcard imports from modules that define __all__.
 # allow-wildcard-with-all =
+allow-wildcard-with-all = True
 
 # Deprecated modules which should not be used, separated by a comma.
 # deprecated-modules =
