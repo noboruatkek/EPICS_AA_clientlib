@@ -15,8 +15,7 @@ import google
 #
 
 class  Request:
-    def __init__(self, action, pv, from , to, fmt,):
-        
+    def __init__(self, action, pv, from_ , to, fmt,):
         pass
 
     def build_query(self):
@@ -26,16 +25,14 @@ class  Request:
 
 class AAServer:
 
-    def __init__(self, url="http://www-cont.j-parc.jp/retrieval/data/"):
+    def __init__(self, url="<put url for your server>"):
         self.url=url
         pass
-
 
     def send_req(self, req, data):
         self.dev=request.urlopen(url)
         pass
 
-    
 def convert_pb_chunk(chunk):
     _type_dict={
         SCALAR_BYTE: ScalarByte,

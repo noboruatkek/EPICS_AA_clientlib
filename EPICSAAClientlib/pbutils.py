@@ -91,11 +91,12 @@ def convert_pb(raw):
 def PayloadInfoToDict(plinfo:PayloadInfo):
     d=MessageToDict(plinfo)
     logging.info(f"{[(desc.name, obj) for desc,obj in plinfo.ListFields()]}")
-    logging.debug(f"{d=},{plinfo.headers}")
+    # logging.debug(f"{d=},{plinfo.headers}")
+    logging.debug(f"d=%s,%s", d, plinfo.headers)
     if hasattr(plinfo,"headers"):
-        d["headers"]=dict([(h.name,h.val) for h in plinfo.headers])
+        d["headers"]={h.name:h.val for h in plinfo.headers}
     elif "headers" in d:
-        d["headers"]=dict([(h["name"],h["val"]) for h in d["headers"]])
-    logging.debug(f"{d=}")
+        d["headers"]={ h["name"]:h["val"] for h in d["headers"]}
+    logging.debug("d=%s",d)
     return d
 
