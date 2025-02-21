@@ -6,8 +6,7 @@
 """
 import typing
 from typing import List, Union
-
-import urllib.request as request ,urllib.parse as parse
+from urllib import request, parse
 import os
 import os.path
 import asyncio
@@ -17,11 +16,14 @@ import importlib
 from importlib import reload
 import concurrent.futures
 
-import json,datetime,time
+import json
+import datetime
+import time
 import logging
+from ..WebAPIs import *
+
 logging.getLogger().setLevel(logging.WARN)
 
-from ..WebAPIs import *
 
 # setup Timezone
 # import pytz
@@ -94,8 +96,9 @@ __bi_chan_names=(
 __Chan_name= __ai_chan_names + __li_chan_names + __bi_chan_names
     
 def test():
-    import openpyxl,pandas
-    import pandas,numpy
+    import openpyxl
+    import pandas
+    import numpy
     import math
 
     xlsxfn="WTA_Channels_Alarm_PB.xlsx"
@@ -110,7 +113,7 @@ def test():
     da['Chan name']=__Chan_name
     # check if channels are archived or not
     for idx, row in da.iterrows():
-        da.at[idx,"Archived"]=areWeArchiving(da.at[idx,"Chan name"])
+        da.at[idx,"Archived"]=areWeArchiving(row.loc["Chan name"])
   
     with pandas.ExcelWriter(xlsxfn,
                             engine="openpyxl",
@@ -144,10 +147,10 @@ def test_postprocess(chn, nsamples=1200):
     """
     max_th=4 -> 141.113u 4.184s 1:07.69 214.6%	0+0k 0+0io 67pf+0w
     """
-    import openpyxl,pandas
-    import pandas,numpy
+    import openpyxl
+    import pandas, numpy
     import math
-    import matplotlib.pyplot as pyplot
+    from  matplotlib import pyplot
     
     pps=("","mean","std","loess",) #"kurtosis",
     fig, plts=pyplot.subplots(len(pps),1)
@@ -187,10 +190,10 @@ def test_postprocess(chn, nsamples=1200):
             lolo=float(meta["LOLO"])
             high=float(meta["HIGH"])
             low =float(meta["LOW"])
-            if (hihi > high):
+            if hihi > high :
                 plt.hlines(hihi,xmin, xmax,linestyle="--",color="red")
                 plt.hlines(high, xmin,xmax,linestyle=":",color='orange')
-            if (lolo < low):    
+            if lolo < low :    
                 plt.hlines(lolo,xmin,xmax,linestyle="--",color='red')
                 plt.hlines(low ,xmin,xmax,linestyle=":", color='orange')
         plt.legend()
@@ -206,10 +209,10 @@ def  test_postprocess_pb(chn,nsamples=1200):
     max_th=4 ->  98.021u 2.558s 0:36.34 276.7%	0+0k 0+0io 59pf+0w
     max_th=8 -> 154.400u 4.838s 0:28.50 558.7%	0+0k 0+0io 66pf+0w
     """
-    import openpyxl,pandas
+    import openpyxl
     import pandas,numpy
     import math
-    import matplotlib.pyplot as pyplot
+    from matplotlib import pyplot
 
     pps=("", "mean", "std", "loess",)
     nsamples=1200
@@ -246,10 +249,10 @@ def  test_postprocess_pb(chn,nsamples=1200):
             lolo=float(meta["LOLO"])
             high=float(meta["HIGH"])
             low =float(meta["LOW"])
-            if (hihi > high):
+            if hihi > high:
                 plt.hlines(hihi,xmin, xmax,linestyle="--",color="red")
                 plt.hlines(high, xmin,xmax,linestyle=":",color='orange')
-            if (lolo < low):    
+            if lolo < low:
                 plt.hlines(lolo,xmin,xmax,linestyle="--",color='red')
                 plt.hlines(low ,xmin,xmax,linestyle=":", color='orange')
         plt.legend()
@@ -272,13 +275,11 @@ def test_postprocess_all(nsamples=1200):
     while True:
         done,not_done=concurrent.futures.wait(futures,timeout=10)
         if not not_done:
-            logging.info(f"not_done:{not_done}")
+            logging.info("not_done:%s", not_done)
             break
-        else:
-            count +=1
-            logging.warning(f"waiting({count}).")
-            continue
-    logging.warning(f"Done({count}).")
+        count +=1
+        logging.warning("waiting %s time   %s/%s",count,len(done), len(Chan_name))
+    logging.warning("Done %s ",  count)
     
 if __name__ == "__main__":
     # # 
@@ -290,4 +291,3 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     # test()
     test_postprocess_all()
-

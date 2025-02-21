@@ -1,13 +1,14 @@
 #!python3
 # -*- coding:utf-8 -*-
-# for test,
-
-from ..pbutils import *
-
+"""
+for test pbulits.py 
+"""
 import time
 import datetime
 import pytz
-import matplotlib.pyplot as pyplot
+from  matplotlib import pyplot
+
+from ..pbutils import *
 
 req={ "pv":'MRMON:DCCT_073_1:VAL:MRPWR',
       # "from" : datetime.datetime(2020,1,20,0,0,0,0,tzinfo=JST),
@@ -33,10 +34,10 @@ def pb_test():
     
     for chunk in c:
         #print(chunk.keys(),chunk["info"]) :chunk.keys=["info","data"]
-        pvname=chunk['info'].pvname
-        dtype=chunk["info"].type
+        # pvname=chunk['info'].pvname
+        # dtype=chunk["info"].type
         year=chunk['info'].year
-        elementCount=chunk["info"].elementCount
+        # elementCount=chunk["info"].elementCount
         yeart0=time.mktime((year,1,1,0,0,0,0,0,0))
         data=chunk["data"]
         severities=[o.severity == 0 for o in data]
@@ -44,14 +45,14 @@ def pb_test():
                severities.count(True), severities.count(False), 
                len(data))
         # time.mktime(d.utctimetuple())
-        T.extend([ (yeart0+o.secondsintoyear+ o.nano*1e-9)/SECSADAY  for o in data if (o.severity == 0)])
-        X.extend([  o.val for o in data if (o.severity == 0)])
+        T.extend([ (yeart0+o.secondsintoyear+ o.nano*1e-9)/SECSADAY  for o in data if o.severity == 0 ])
+        X.extend([  o.val for o in data if o.severity == 0 ])
     print ("pb conversion  took :",time.monotonic()-st, "raw data size:",len(raw))
     print( "data size", len(X))
     pyplot.clf()
     pyplot.plot_date(T,X)
     #pyplot.plot(T,X)
     pyplot.draw()
-    pyplot.savefig("{}_python_pb.png".format(req["pv"]))
+    pyplot.savefig( f"{req['pv']}_python_pb.png".format())
     pyplot.clf()
     print ("pb done:",time.monotonic()-st)
