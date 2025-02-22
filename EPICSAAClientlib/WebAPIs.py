@@ -1,6 +1,6 @@
 #!python3.12
 #-*- coding:utf-8 -*-
-# pylint: disable=C0103, W0401, R0903, C0116, R1735, R0912, W0611, W0614, R0913
+# pylint: disable=C0103, W0401, R0903, C0116, R1735, R0912, W0611, W0614, R0913, W0311
 """
 :Author: noboru.yamamoto@kek.jp
 :date:  2025/1/22 - 
@@ -36,24 +36,21 @@ __all__=[
     # bpl/
     'filterArchivedPVs', # post
     # 'getApplianceMetrics', # bpl/reports
-    # 'getApplianceMetricsForAppliance' , # bpl/reports
-    # 'getInstanceMetricsForAppliance', # bpl/reports
-    # 'getPVDetails', #bpl/reports
+    # 'getApplianceMetricsForAppliance' , # bpl/reports, not implemented?
+    # 'getInstanceMetricsForAppliance', # bpl/reports, not implemented?
+    # 'getPVDetails', #bpl/reports ,not implemented?
     'searchForPVsRegex',
     'getMatchingPVs',
     'getProcessMetrics',
     'getVersion',
-    # 'getClientConfig'
+    # 'getClientConfig' #not implemented?
     'getMetadata',
     'areWeArchiving',
-    ## DataRetrievalServlet:doGet
     'getData',
-    ## DataRetrievalServlet:doGet/doPost
     'getDataForPVs',
-    ## DataRetrievalServlet:doPost
     'getDataAtTime',
     'getDataAtTimeForAppliance',
-    ## pingServelet
+    #
     "ping",
     #
     'JST','UTC','datetime',
@@ -110,7 +107,7 @@ def buildReqURI(api, query):
     building request uri includes query string.
     """
     query_str=parse.urlencode(query)
-    uri=f"{os.path.join(data_retrieval_url,api)}?{query_str}"
+    uri=f"{os.path.join(data_retrieval_url, api)}?{query_str}"
     uri=uri.replace("True","true").replace("False","false") # EAA does not accept "True" but "true".
     uri=uri.replace("None","null")
     logging.info(uri)
@@ -237,6 +234,7 @@ def getData(
     -----------
     pv:
       str. name PV.
+    
     from_,to_:
       datetime objects for data retirieval time range.
 
@@ -256,7 +254,7 @@ def getData(
         # pvname string 'MRMON:DCCT_073_1:VAL:MRPWR',
         # or with postprcessing eg. pv=mean(test%3Apv%3A123).
         # postprocess functions:
-        #   firstSampe/lastSample/firstFill/lastFill/mean/min/max/count/ncount/nth/median/std/
+        #   firstSample/lastSample/firstFill/lastFill/mean/min/max/count/ncount/nth/median/std/
         #   jitter/ignoreflyers/flylyers/variance/popvariance/kurtosis/skewness/linear/
         #   loess/optimized/optimLastSample/
         #   caplotbinning/deadBand/errorbar
@@ -526,7 +524,7 @@ def DataIterator(chunks:List[dict]) -> Iterable[dict]:
                 continue
 
 if __name__ == "__main__":
-    from .test.test_EAAClientlib import test,test_postprocess_all
-    logging.getLogger().setLevel(logging.INFO)
+    #logging.getLogger().setLevel(logging.INFO)
     # test()
-    test_postprocess_all()
+    #test_postprocess_all()
+    pass
