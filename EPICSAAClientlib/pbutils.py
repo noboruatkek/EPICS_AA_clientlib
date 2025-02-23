@@ -1,16 +1,18 @@
 #!python3
 #-*- coding:utf-8 -*-
-
-from . import EPICSEvent_pb2
-from .EPICSEvent_pb2 import *
+# pylint: disable=R0903, R1735, R0912, R0913, C0103, C0303, C0116, W0401, W0611, W0614, E0611, E0602, E0606
+"""
+utility routines for protocol buffer data.
+"""
+from typing import Union,List
+import logging
 
 import google
 from google.protobuf.json_format import MessageToJson, Parse, MessageToDict
 import  google.protobuf as gpb
 
-from typing import Union
-
-import logging
+from . import EPICSEvent_pb2
+from .EPICSEvent_pb2 import *
 
 # export objects
 __all__=[
@@ -21,13 +23,14 @@ __all__=[
 
 # for raw i.e. http/pb
 def unescape(epb):
-    pb=epb.replace(b'\x1b\x03',b'\x0d').replace(b'\x1b\x02',b'\n').replace(b'\x1b\x01',b'\x1b').strip() # b'\x1b\x01' should be last.
+    pb=epb.replace(b'\x1b\x03',b'\x0d').replace(b'\x1b\x02',b'\n')
+    pb=pb.replace(b'\x1b\x01',b'\x1b').strip() # b'\x1b\x01' should be last.
     return pb
 
 #def findChunkBoundaries(pbraw:Union[bytes, str])->Union[bytes,str]:
 def findChunkBoundaries(pbraw):
     n=0
-    s=[0]
+    s:List[Union[bytes,str]]=[""]
     while 1:
         try:
             i=pbraw.index(b'\n',n)
@@ -41,7 +44,8 @@ def findChunkBoundaries(pbraw):
     return s   #s:[(0, 2),(2, 4), (4,62162)] ->  chunk: pbraw[0:2], pbraw[2:4],pbraw[4:62162]
 
 def convert_pbchunk(chunkbytes):
-    message_type_dict=EPICSEvent_pb2.DESCRIPTOR.message_types_by_name
+    #message_type_dict=EPICSEvent_pb2.DESCRIPTOR.message_types_by_name
+  
     _type_dict={
         SCALAR_BYTE: ScalarByte,
         SCALAR_DOUBLE: ScalarDouble,
@@ -51,7 +55,7 @@ def convert_pbchunk(chunkbytes):
         SCALAR_SHORT: ScalarShort,
         SCALAR_STRING: ScalarString,
         V4_GENERIC_BYTES: V4GenericBytes,
-        WAVEFORM_BYTE: VectorChar, 
+        WAVEFORM_BYTE: VectorChar,
         WAVEFORM_DOUBLE:  VectorDouble,
         WAVEFORM_ENUM: VectorEnum,
         WAVEFORM_FLOAT: VectorFloat,
@@ -69,7 +73,8 @@ def convert_pbchunk(chunkbytes):
             if plinfo.type in _type_dict:
                 T=_type_dict[plinfo.type]
             else: # we should use dictionary
-                logging.debug(f"{plinfo.type=},{plinfo=}")
+                logging.debug("plinfo.type= %s, plinfo=%s",
+                              plinfo.type, plinfo)
                 T=None
                 data=[]
                 continue
@@ -90,13 +95,14 @@ def convert_pb(raw):
 
 def PayloadInfoToDict(plinfo:PayloadInfo):
     d=MessageToDict(plinfo)
-    logging.info(f"{[(desc.name, obj) for desc,obj in plinfo.ListFields()]}")
-    # logging.debug(f"{d=},{plinfo.headers}")
-    logging.debug(f"d=%s,%s", d, plinfo.headers)
+    logging.info("%s",
+                 [(desc.name, obj) for desc,obj in plinfo.ListFields()]
+                 )
+    logging.debug("d=%s,%s",
+                  d, plinfo.headers)
     if hasattr(plinfo,"headers"):
         d["headers"]={h.name:h.val for h in plinfo.headers}
     elif "headers" in d:
         d["headers"]={ h["name"]:h["val"] for h in d["headers"]}
     logging.debug("d=%s",d)
     return d
-
