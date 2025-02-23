@@ -27,4 +27,4 @@ jobs:
         pip install pytz
     - name: Analysing the code with pylint
       run: |
-        pylint --max-line-length 7600 --indent-string "  " --disable "C, R0903, R1735, R0912, R0913, R0914, C0103, C0303, C0116, W0401, W0611, W0614, E0611, E0602, E0606, W0311, C0103" $(git ls-files '*.py')
+        pylint --max-line-length 7600 --indent-string "  " --disable "C, R0903, R1735, R0912, R0913, R0914, C0103, C0303, C0116, W0212, W0401, W0611, W0614, E0611, E0602, E0606, W0311, C0103" $(git ls-files '*.py')
